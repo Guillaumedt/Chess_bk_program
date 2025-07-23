@@ -13,6 +13,7 @@ HIGHLIGHT = (0, 255, 0)
 
 # Initialisation
 pygame.init()
+font = pygame.font.SysFont('Arial', 14)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Échiquier Pygame")
 
@@ -168,9 +169,33 @@ def is_valid_move(board, from_row, from_col, to_row, to_col):
 
     return False
 
+def draw_labels():
+    padding = 5  # un petit décalage du bord
+
+    # Lettres (a-h) en bas à gauche des cases de la dernière rangée (row 7)
+    for col in range(COLS):
+        letter = chr(ord('a') + col)
+        text = font.render(letter, True, (0, 0, 0))
+        x = col * SQUARE_SIZE + padding
+        y = (ROWS - 1) * SQUARE_SIZE + SQUARE_SIZE - padding
+        text_rect = text.get_rect(bottomleft=(x, y))
+        screen.blit(text, text_rect)
+
+    # Chiffres (8-1) en haut à gauche des cases de la première colonne (col 0)
+    for row in range(ROWS):
+        number = str(8 - row)
+        text = font.render(number, True, (0, 0, 0))
+        x = padding
+        y = row * SQUARE_SIZE + padding
+        text_rect = text.get_rect(topleft=(x, y))
+        screen.blit(text, text_rect)
+
+
+
 # Boucle principale
 while True:
     draw_board()
+    draw_labels()
     draw_pieces()
     pygame.display.flip()
 
