@@ -251,13 +251,9 @@ def Is_in_check(board):
         for c in range(8):
             attacker = board[r][c]
             if attacker and piece_color(attacker) != king_color:
-                try :
-                    if is_valid_move(board, r, c, king_pos[0], king_pos[1], True):
-                    # print(f"  {attacker} en {pos_to_square((c,r))} peut attaquer le roi en {pos_to_square((king_pos[1], king_pos[0]))}")
-                        return True  # Le roi serait en échec
-                except TypeError:
-                    print(board)
-                    return(True)
+                if is_valid_move(board, r, c, king_pos[0], king_pos[1], True):
+                # print(f"  {attacker} en {pos_to_square((c,r))} peut attaquer le roi en {pos_to_square((king_pos[1], king_pos[0]))}")
+                    return True  # Le roi serait en échec
     return False
 
 # Vérifie si le joueur courant est en échec et mat
@@ -268,14 +264,8 @@ def is_in_checkmate(board, color):
             if piece and piece_color(piece) == color:
                 valid_moves = get_valid_moves_for_piece(board, r, c)
                 for r2, c2 in valid_moves:
-                    # Copie du plateau
-                    import copy
-                    temp_board = copy.deepcopy(board)
-                    # Simulation du coup
-                    temp_board[r2][c2] = temp_board[r][c]
-                    temp_board[r][c] = None
                     # Vérifie si le roi est toujours en sécurité
-                    if  verify_check(temp_board, r,c,r2,c2):
+                    if  verify_check(board, r,c,r2,c2):
                         return False  # Au moins un coup légal sauve le roi
     return True  # Aucun coup ne sauve → échec et mat
 
