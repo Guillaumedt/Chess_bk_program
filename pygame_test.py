@@ -76,11 +76,18 @@ def is_valid_move(board, from_row, from_col, to_row, to_col, is_test = False):
     piece = board[from_row][from_col]
     if not piece:
         return False
-    if piece_color(piece) != current_turn and (is_test is False):
-        return False
-    target_piece = board[to_row][to_col]
-    if target_piece and piece_color(target_piece) == current_turn:
-        return False  # Pas capturer ses propres pièces
+    if not is_test:
+        if piece_color(piece) != current_turn:
+            return False
+        target_piece = board[to_row][to_col]
+        if target_piece and piece_color(target_piece) == current_turn:
+            return False
+    else:
+        target_piece = board[to_row][to_col]
+        # On autorise de capturer une pièce alliée en mode test (utile pour détecter les chemins),
+        # mais on interdit juste de capturer une pièce qui bloquerait l’attaque :
+        if target_piece and piece_color(target_piece) == piece_color(piece):
+            return False
 
     dr = to_row - from_row
     dc = to_col - from_col
@@ -296,7 +303,7 @@ def draw_eval_bar(eval_score):
 
     screen.blit(text_surface, text_rect)
 
-stockfish = s.Stockfish(path = "c:\\Users\\galar\\Documents\\Projets\\echecs\\stockfish\\stockfish-windows-x86-64-avx2.exe")
+stockfish = s.Stockfish(path = "stockfish\\stockfish-windows-x86-64-avx2.exe")
 stockfish.set_depth(15)
 
 
