@@ -13,6 +13,7 @@ SQUARE_SIZE = WIDTH // COLS
 WHITE = pygame.Color("#f0d9b5")
 BROWN = pygame.Color("#b58863")
 HIGHLIGHT = pygame.Color("#f0a500")
+CHECK = pygame.Color("#f00000")
 # Initialisation
 pygame.init()
 font = pygame.font.SysFont('Arial', 14)
@@ -55,6 +56,19 @@ def hex_to_rgb(hex_color):
 
 
 def draw_board():
+    king_pos = None
+    if Is_in_check(board=board):
+                 # Trouve le roi du joueur courant
+                king_color = current_turn
+                # print("king_color: ",king_color)
+                king_pos = None
+                for r in range(8):
+                    for c in range(8):
+                        if board[r][c] == f"{king_color}-king":
+                            king_pos = (r, c)
+                            break
+                    if king_pos:
+                        break
     for row in range(ROWS):
         for col in range(COLS):
             square_color = WHITE if (row + col) % 2 == 0 else BROWN
@@ -69,6 +83,14 @@ def draw_board():
                 highlight_rgb = hex_to_rgb(HIGHLIGHT)
                 highlight_surface.fill((*highlight_rgb, 100))  # Ajout d'une transparence alphaq
                 screen.blit(highlight_surface, rect.topleft)
+            if king_pos != None and king_pos ==  (row, col):
+                highlight_surface = pygame.Surface((SQUARE_SIZE, SQUARE_SIZE), pygame.SRCALPHA)
+                highlight_rgb = hex_to_rgb(CHECK)
+                highlight_surface.fill((*highlight_rgb, 100))  # Ajout d'une transparence alphaq
+                screen.blit(highlight_surface, rect.topleft)
+            
+
+                
 
 def draw_pieces():
     for row in range(ROWS):
@@ -212,7 +234,7 @@ def verify_check(board, from_row, from_col, to_row, to_col):
 def Is_in_check(board = board):
     
     # Trouve le roi du joueur courant
-    king_color = piece_color(piece)
+    king_color = current_turn
     # print("king_color: ",king_color)
     king_pos = None
     for r in range(8):
