@@ -225,13 +225,11 @@ def verify_check(board, from_row, from_col, to_row, to_col):
     piece = temp_board[from_row][from_col]
     temp_board[to_row][to_col] = piece
     temp_board[from_row][from_col] = None
-    print("from row: ",from_row,"\nfrom col: ",from_col)
-    print("to row: ",to_row,"\nto col: ",to_col)
 
     return not Is_in_check(temp_board)  # Le roi est en sécurité si il n'est pas en échec
 
 # Vérifie si le joueur courant est en échec
-def Is_in_check(board = board):
+def Is_in_check(board):
     
     # Trouve le roi du joueur courant
     king_color = current_turn
@@ -253,9 +251,13 @@ def Is_in_check(board = board):
         for c in range(8):
             attacker = board[r][c]
             if attacker and piece_color(attacker) != king_color:
-                if is_valid_move(board, r, c, king_pos[0], king_pos[1], True):
+                try :
+                    if is_valid_move(board, r, c, king_pos[0], king_pos[1], True):
                     # print(f"  {attacker} en {pos_to_square((c,r))} peut attaquer le roi en {pos_to_square((king_pos[1], king_pos[0]))}")
-                    return True  # Le roi serait en échec
+                        return True  # Le roi serait en échec
+                except TypeError:
+                    print(board)
+                    return(True)
     return False
 
 # Vérifie si le joueur courant est en échec et mat
@@ -267,12 +269,13 @@ def is_in_checkmate(board, color):
                 valid_moves = get_valid_moves_for_piece(board, r, c)
                 for r2, c2 in valid_moves:
                     # Copie du plateau
-                    temp_board = [row.copy() for row in board]
+                    import copy
+                    temp_board = copy.deepcopy(board)
                     # Simulation du coup
                     temp_board[r2][c2] = temp_board[r][c]
                     temp_board[r][c] = None
                     # Vérifie si le roi est toujours en sécurité
-                    if not verify_check(temp_board, color):
+                    if  verify_check(temp_board, r,c,r2,c2):
                         return False  # Au moins un coup légal sauve le roi
     return True  # Aucun coup ne sauve → échec et mat
 
@@ -481,4 +484,6 @@ while True:
     stockfish.set_fen_position(fen)
     eval_cp = stockfish.get_evaluation()
     draw_eval_bar(eval_cp["value"]/100)
+    if is_in_checkmate(board,current_turn):
+        print("maaaaaat!!!")
 # testing commit 
