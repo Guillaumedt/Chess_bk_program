@@ -9,10 +9,10 @@ ROWS, COLS = 8, 8
 SQUARE_SIZE = WIDTH // COLS
 
 # Couleurs
-WHITE = (245, 245, 220)
-BROWN = (139, 69, 19)
-HIGHLIGHT = (0, 255, 0)
 
+WHITE = pygame.Color("#f0d9b5")
+BROWN = pygame.Color("#b58863")
+HIGHLIGHT = pygame.Color("#f0a500")
 # Initialisation
 pygame.init()
 font = pygame.font.SysFont('Arial', 14)
@@ -46,13 +46,29 @@ moves = []
 
 current_turn = "white"  # Blancs commencent
 
+def hex_to_rgb(hex_color):
+    if isinstance(hex_color, pygame.Color):
+        return (hex_color.r, hex_color.g, hex_color.b)
+    hex_color = hex_color.lstrip("#")
+    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
+
+
 def draw_board():
     for row in range(ROWS):
         for col in range(COLS):
-            color = WHITE if (row + col) % 2 == 0 else BROWN
-            pygame.draw.rect(screen, color, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+            square_color = WHITE if (row + col) % 2 == 0 else BROWN
+            color = pygame.Color(square_color)
+
+            rect = pygame.Rect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
+            pygame.draw.rect(screen, color, rect)
+
+            # Surlignage semi-transparent si case sélectionnée
             if selected == (row, col):
-                pygame.draw.rect(screen, HIGHLIGHT, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE), 4)
+                highlight_surface = pygame.Surface((SQUARE_SIZE, SQUARE_SIZE), pygame.SRCALPHA)
+                highlight_rgb = hex_to_rgb(HIGHLIGHT)
+                highlight_surface.fill((*highlight_rgb, 100))  # Ajout d'une transparence alphaq
+                screen.blit(highlight_surface, rect.topleft)
 
 def draw_pieces():
     for row in range(ROWS):
@@ -314,7 +330,6 @@ def get_valid_moves_for_piece(board, from_row, from_col):
 
 def draw_labels():
     padding = 5  # un petit décalage du bord
-
     # Lettres (a-h) en bas à gauche des cases de la dernière rangée (row 7)
     for col in range(COLS):
         letter = chr(ord('a') + col)
