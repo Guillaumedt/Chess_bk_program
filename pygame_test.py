@@ -69,11 +69,11 @@ def piece_color(piece_name):
         return "black"
     return None
 
-def is_valid_move(board, from_row, from_col, to_row, to_col):
+def is_valid_move(board, from_row, from_col, to_row, to_col, is_test = False):
     piece = board[from_row][from_col]
     if not piece:
         return False
-    if piece_color(piece) != current_turn:
+    if piece_color(piece) != current_turn and (is_test is False):
         return False
     target_piece = board[to_row][to_col]
     if target_piece and piece_color(target_piece) == current_turn:
@@ -126,7 +126,7 @@ def is_valid_move(board, from_row, from_col, to_row, to_col):
         step_r = 1 if dr > 0 else -1
         step_c = 1 if dc > 0 else -1
         r, c = from_row + step_r, from_col + step_c
-        while r != to_row and c != to_col:
+        while r != to_row or c != to_col:
             if board[r][c] is not None:
                 return False
             r += step_r
@@ -152,7 +152,7 @@ def is_valid_move(board, from_row, from_col, to_row, to_col):
             step_r = 1 if dr > 0 else -1
             step_c = 1 if dc > 0 else -1
             r, c = from_row + step_r, from_col + step_c
-            while r != to_row and c != to_col:
+            while r != to_row or c != to_col:
                 if board[r][c] is not None:
                     return False
                 r += step_r
@@ -167,6 +167,46 @@ def is_valid_move(board, from_row, from_col, to_row, to_col):
         return False
 
     return False
+
+# vérifie si une fois la pièce bougée, le roi se situe en échec : si c'est le cas return false (mouvement illégal)
+def verify_check(board, from_row, from_col, to_row, to_col):
+    import copy
+    temp_board = copy.deepcopy(board)
+
+    # Simule le déplacement
+    piece = temp_board[from_row][from_col]
+    temp_board[to_row][to_col] = piece
+    temp_board[from_row][from_col] = None
+    print("from row: ",from_row,"\nfrom col: ",from_col)
+    print("to row: ",to_row,"\nto col: ",to_col)
+
+    # Trouve le roi du joueur courant
+    king_color = piece_color(piece)
+    print("king_color: ",king_color)
+    king_pos = None
+    for r in range(8):
+        for c in range(8):
+            if temp_board[r][c] == f"{king_color}-king":
+                king_pos = (r, c)
+                break
+        if king_pos:
+            break
+
+
+    # Vérifie si une pièce adverse peut l'attaquer
+    print("Test de mouvement de", piece, "en", pos_to_square((to_col, to_row)))
+    print("Position du roi : ", king_pos)
+    print("Attaques potentielles après déplacement :")
+    for r in range(8):
+        for c in range(8):
+            attacker = temp_board[r][c]
+            if attacker and piece_color(attacker) != king_color:
+                if is_valid_move(temp_board, r, c, king_pos[0], king_pos[1], True):
+                    print(f"  {attacker} en {pos_to_square((c,r))} peut attaquer le roi en {pos_to_square((king_pos[1], king_pos[0]))}")
+                    return False  # Le roi serait en échec
+    return True  # Le roi est en sécurité
+
+
 
 # Boucle principale
 while True:
@@ -189,7 +229,7 @@ while True:
                 from_row, from_col = selected
                 piece = board[from_row][from_col]
                 if piece:
-                    if is_valid_move(board, from_row, from_col, row, col):
+                    if is_valid_move(board, from_row, from_col, row, col) and verify_check(board, from_row, from_col, row, col):
                         # Enregistrement du coup
                         move = pos_to_square((from_col, from_row)) + pos_to_square((col, row))
                         moves.append(move)
