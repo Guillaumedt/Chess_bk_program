@@ -206,4 +206,5 @@ while True:
             else:
                 if board[row][col] and piece_color(board[row][col]) == current_turn:
                     selected = (row, col)
+# testing commit 
     
