@@ -1,8 +1,10 @@
 import pygame
 import sys
+import stockfish as s
 
 # Constantes
 WIDTH, HEIGHT = 640, 640
+EVAL_BAR_WIDTH = 20
 ROWS, COLS = 8, 8
 SQUARE_SIZE = WIDTH // COLS
 
@@ -13,7 +15,8 @@ HIGHLIGHT = (0, 255, 0)
 
 # Initialisation
 pygame.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+font = pygame.font.SysFont('Arial', 14)
+screen = pygame.display.set_mode((WIDTH + EVAL_BAR_WIDTH, HEIGHT))
 pygame.display.set_caption("Échiquier Pygame")
 
 # Charger les images de pièces
@@ -208,9 +211,99 @@ def verify_check(board, from_row, from_col, to_row, to_col):
 
 
 
+def draw_labels():
+    padding = 5  # un petit décalage du bord
+
+    # Lettres (a-h) en bas à gauche des cases de la dernière rangée (row 7)
+    for col in range(COLS):
+        letter = chr(ord('a') + col)
+        text = font.render(letter, True, (0, 0, 0))
+        x = col * SQUARE_SIZE + padding
+        y = (ROWS - 1) * SQUARE_SIZE + SQUARE_SIZE - padding
+        text_rect = text.get_rect(bottomleft=(x, y))
+        screen.blit(text, text_rect)
+
+    # Chiffres (8-1) en haut à gauche des cases de la première colonne (col 0)
+    for row in range(ROWS):
+        number = str(8 - row)
+        text = font.render(number, True, (0, 0, 0))
+        x = padding
+        y = row * SQUARE_SIZE + padding
+        text_rect = text.get_rect(topleft=(x, y))
+        screen.blit(text, text_rect)
+
+def board_to_fen(board):
+    piece_to_fen = {
+        "white-pawn": "P", "white-rook": "R", "white-knight": "N", "white-bishop": "B", "white-queen": "Q", "white-king": "K",
+        "black-pawn": "p", "black-rook": "r", "black-knight": "n", "black-bishop": "b", "black-queen": "q", "black-king": "k"
+    }
+    fen_rows = []
+    for row in board:
+        empty = 0
+        fen_row = ""
+        for cell in row:
+            if cell is None:
+                empty += 1
+            else:
+                if empty > 0:
+                    fen_row += str(empty)
+                    empty = 0
+                fen_row += piece_to_fen[cell]
+        if empty > 0:
+            fen_row += str(empty)
+        fen_rows.append(fen_row)
+    fen = "/".join(fen_rows)
+    fen += " " + ("w" if current_turn == "white" else "b") + " - - 0 1"  # Simplification, pas de roque ni échec
+    return fen
+
+def stockfish_move():
+    stockfish.go(movetime=50)
+    eval = stockfish.get_eval()
+    # mettre à jour un état partagé, ex :
+    global evaluation
+    evaluation = eval
+
+def draw_eval_bar(eval_score):
+    max_eval = 5  # +5 pions max affiché, au-delà on bloque la barre
+
+    bar_height = HEIGHT
+    bar_x = WIDTH  # juste à droite de l'échiquier
+    bar_y = 0
+
+    pygame.draw.rect(screen, (200, 200, 200), (bar_x, bar_y, EVAL_BAR_WIDTH, bar_height))  # fond gris clair
+
+    # Clamp score entre -max_eval et +max_eval
+    score = max(-max_eval, min(max_eval, eval_score))
+
+    middle = bar_height // 2
+    offset = int((score / max_eval) * (bar_height // 2))
+
+    if score >= 0:
+        pygame.draw.rect(screen, (255, 255, 255), (bar_x, middle - offset, EVAL_BAR_WIDTH, offset))
+    else:
+        pygame.draw.rect(screen, (0, 0, 0), (bar_x, middle, EVAL_BAR_WIDTH, -offset))
+
+    pygame.draw.line(screen, (100, 100, 100), (bar_x, middle), (bar_x + EVAL_BAR_WIDTH, middle), 2)
+
+    # Texte d'évaluation centré verticalement dans la barre
+    eval_text = f"{eval_score:.2f}"
+    # Texte noir sur fond clair, blanc sur fond foncé : ici je propose noir partout, puisque fond global est gris clair
+    text_color = (0, 0, 0)
+    text_surface = font.render(eval_text, True, text_color)
+
+    # Centrage horizontal + vertical dans la barre d'éval
+    text_rect = text_surface.get_rect(center=(bar_x + EVAL_BAR_WIDTH // 2, middle))
+
+    screen.blit(text_surface, text_rect)
+
+stockfish = s.Stockfish(path = "c:\\Users\\galar\\Documents\\Projets\\echecs\\stockfish\\stockfish-windows-x86-64-avx2.exe")
+stockfish.set_depth(15)
+
+
 # Boucle principale
 while True:
     draw_board()
+    draw_labels()
     draw_pieces()
     pygame.display.flip()
 
@@ -246,5 +339,8 @@ while True:
             else:
                 if board[row][col] and piece_color(board[row][col]) == current_turn:
                     selected = (row, col)
+    fen = board_to_fen(board)
+    stockfish.set_fen_position(fen)
+    eval_cp = stockfish.get_evaluation()
+    draw_eval_bar(eval_cp["value"]/100)
 # testing commit 
-    
