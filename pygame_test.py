@@ -258,6 +258,8 @@ def Is_in_check(board):
 
 # Vérifie si le joueur courant est en échec et mat
 def is_in_checkmate(board, color):
+    if Is_in_check(board) != True: # pour être en echec et mat, il faut d'abord être en échec !
+        return False
     for r in range(8):
         for c in range(8):
             piece = board[r][c]
@@ -268,6 +270,21 @@ def is_in_checkmate(board, color):
                     if  verify_check(board, r,c,r2,c2):
                         return False  # Au moins un coup légal sauve le roi
     return True  # Aucun coup ne sauve → échec et mat
+
+def is_stalemate(board, color):
+    # Vérifie si le roi est déjà en échec : si oui, ce n'est pas un pat
+    if Is_in_check(board) == True:
+        return False
+    for r in range(8):
+        for c in range(8):
+            piece = board[r][c]
+            if piece and piece_color(piece) == color:
+                valid_moves = get_valid_moves_for_piece(board, r, c)
+                for r2, c2 in valid_moves:
+                    if verify_check(board, r, c, r2, c2):
+                        return False  # Au moins un coup légal → pas de pat
+
+    return True  # Aucun coup légal et roi pas en échec → pat
 
 
 def get_valid_moves_for_piece(board, from_row, from_col):
@@ -476,4 +493,7 @@ while True:
     draw_eval_bar(eval_cp["value"]/100)
     if is_in_checkmate(board,current_turn):
         print("maaaaaat!!!")
+    if is_stalemate(board, current_turn):
+        print("GROS PAT")
+        print("T'es mauvais Jack")
 # testing commit 
