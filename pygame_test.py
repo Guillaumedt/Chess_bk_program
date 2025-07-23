@@ -8,6 +8,14 @@ EVAL_BAR_WIDTH = 20
 ROWS, COLS = 8, 8
 SQUARE_SIZE = WIDTH // COLS
 
+#coder le roque
+WHITE_KING_HAS_MOOVED = False
+BLACK_KING_HAS_MOOVED = False
+WHITE_Ra1_HAS_MOOVED = False
+WHITE_Rh1_HAS_MOOVED = False
+BLACK_Rh8_HAS_MOOVED = False
+BLACK_Ra8_HAS_MOOVED = False
+
 # Couleurs
 
 WHITE = pygame.Color("#f0d9b5")
@@ -210,7 +218,48 @@ def is_valid_move(board, from_row, from_col, to_row, to_col, is_test = False):
 
     # Roi (mouvements d'une case dans toutes les directions)
     elif piece.endswith("king"):
+        
         if max(abs(dr), abs(dc)) == 1:
+            return True
+        elif current_turn == "white" and not WHITE_KING_HAS_MOOVED and not WHITE_Rh1_HAS_MOOVED and dc == 2:
+            step_r = 0 if dr == 0 else (1 if dr > 0 else -1)
+            step_c = 0 if dc == 0 else (1 if dc > 0 else -1)
+            r, c = from_row + step_r, from_col + step_c
+            while (r != to_row or c != to_col):
+                if board[r][c] is not None:
+                    return False
+                r += step_r
+                c += step_c
+            return True
+        elif current_turn == "white" and not WHITE_KING_HAS_MOOVED and not WHITE_Ra1_HAS_MOOVED and dc == -2:
+            step_r = 0 if dr == 0 else (1 if dr > 0 else -1)
+            step_c = 0 if dc == 0 else (1 if dc > 0 else -1)
+            r, c = from_row + step_r, from_col + step_c
+            while (r != to_row or c != to_col):
+                if board[r][c] is not None:
+                    return False
+                r += step_r
+                c += step_c
+            return True
+        elif current_turn == "black" and not BLACK_KING_HAS_MOOVED and not BLACK_Ra8_HAS_MOOVED and dc == -2:
+            step_r = 0 if dr == 0 else (1 if dr > 0 else -1)
+            step_c = 0 if dc == 0 else (1 if dc > 0 else -1)
+            r, c = from_row + step_r, from_col + step_c
+            while (r != to_row or c != to_col):
+                if board[r][c] is not None:
+                    return False
+                r += step_r
+                c += step_c
+            return True
+        elif current_turn == "black" and not BLACK_KING_HAS_MOOVED and not BLACK_Rh8_HAS_MOOVED and dc == 2:
+            step_r = 0 if dr == 0 else (1 if dr > 0 else -1)
+            step_c = 0 if dc == 0 else (1 if dc > 0 else -1)
+            r, c = from_row + step_r, from_col + step_c
+            while (r != to_row or c != to_col):
+                if board[r][c] is not None:
+                    return False
+                r += step_r
+                c += step_c
             return True
         return False
 
@@ -459,7 +508,33 @@ while True:
                         moves.append(move)
 
                         # Déplacement
-                        board[row][col] = piece
+                        print(board[from_row][from_col][6:] == "king" and abs(col - from_col) == -2)
+                        if board[from_row][from_col][6:] == "king" and col - from_col == 2:
+                            board[row][col] = piece
+                            board[from_row][from_col] = None
+                            board[row][col-1] = board[row][col+1]
+                            board[row][col+1] = None
+                        elif board[from_row][from_col][6:] == "king" and col - from_col == -2:
+                            board[row][col] = piece
+                            board[from_row][from_col] = None
+                            board[row][col+1] = board[row][col-2]
+                            board[row][col-2] = None
+                        elif board[from_row][from_col][6:] == "king" and abs(col - from_col) == 1 and current_turn == "white":
+                            WHITE_KING_HAS_MOOVED = True
+                        elif board[from_row][from_col][6:] == "king" and abs(col - from_col) == 1 and current_turn == "black":
+                            BLACK_KING_HAS_MOOVED = True
+                        elif board[from_row][from_col][6:] == "rook" and (from_row,from_col) == (0,0) and current_turn == "white":
+                            WHITE_Ra1_HAS_MOOVED = True
+                        elif board[from_row][from_col][6:] == "rook" and (from_row,from_col) == (0,7) and current_turn == "white":
+                            WHITE_Rh1_HAS_MOOVED = True
+                        elif board[from_row][from_col][6:] == "rook" and (from_row,from_col) == (0,0) and current_turn == "white":
+                            WHITE_Ra1_HAS_MOOVED = True
+                        elif board[from_row][from_col][6:] == "rook" and (from_row,from_col) == (7,0) and current_turn == "black":
+                            BLACK_Ra8_HAS_MOOVED = True
+                        elif board[from_row][from_col][6:] == "rook" and (from_row,from_col) == (7,7) and current_turn == "black":
+                            BLACK_Rh8_HAS_MOOVED = True
+
+                        board[row][col] = piece 
                         board[from_row][from_col] = None
 
                         # Changer de joueur
