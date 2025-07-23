@@ -190,32 +190,126 @@ def verify_check(board, from_row, from_col, to_row, to_col):
     print("from row: ",from_row,"\nfrom col: ",from_col)
     print("to row: ",to_row,"\nto col: ",to_col)
 
+    return not Is_in_check(temp_board)  # Le roi est en sécurité si il n'est pas en échec
+
+# Vérifie si le joueur courant est en échec
+def Is_in_check(board = board):
+    
     # Trouve le roi du joueur courant
     king_color = piece_color(piece)
-    print("king_color: ",king_color)
+    # print("king_color: ",king_color)
     king_pos = None
     for r in range(8):
         for c in range(8):
-            if temp_board[r][c] == f"{king_color}-king":
+            if board[r][c] == f"{king_color}-king":
                 king_pos = (r, c)
                 break
         if king_pos:
             break
 
-
     # Vérifie si une pièce adverse peut l'attaquer
-    print("Test de mouvement de", piece, "en", pos_to_square((to_col, to_row)))
-    print("Position du roi : ", king_pos)
-    print("Attaques potentielles après déplacement :")
+    # print("Test de mouvement de", piece, "en", pos_to_square((to_col, to_row)))
+    # print("Position du roi : ", king_pos)
+    # print("Attaques potentielles après déplacement :")
     for r in range(8):
         for c in range(8):
-            attacker = temp_board[r][c]
+            attacker = board[r][c]
             if attacker and piece_color(attacker) != king_color:
-                if is_valid_move(temp_board, r, c, king_pos[0], king_pos[1], True):
-                    print(f"  {attacker} en {pos_to_square((c,r))} peut attaquer le roi en {pos_to_square((king_pos[1], king_pos[0]))}")
-                    return False  # Le roi serait en échec
-    return True  # Le roi est en sécurité
+                if is_valid_move(board, r, c, king_pos[0], king_pos[1], True):
+                    # print(f"  {attacker} en {pos_to_square((c,r))} peut attaquer le roi en {pos_to_square((king_pos[1], king_pos[0]))}")
+                    return True  # Le roi serait en échec
+    return False
 
+# Vérifie si le joueur courant est en échec et mat
+def is_in_checkmate(board, color):
+    for r in range(8):
+        for c in range(8):
+            piece = board[r][c]
+            if piece and piece_color(piece) == color:
+                valid_moves = get_valid_moves_for_piece(board, r, c)
+                for r2, c2 in valid_moves:
+                    # Copie du plateau
+                    temp_board = [row.copy() for row in board]
+                    # Simulation du coup
+                    temp_board[r2][c2] = temp_board[r][c]
+                    temp_board[r][c] = None
+                    # Vérifie si le roi est toujours en sécurité
+                    if not verify_check(temp_board, color):
+                        return False  # Au moins un coup légal sauve le roi
+    return True  # Aucun coup ne sauve → échec et mat
+
+
+def get_valid_moves_for_piece(board, from_row, from_col):
+    piece = board[from_row][from_col]
+    if not piece:
+        return []
+
+    color = piece_color(piece)
+    directions = []
+    moves = []
+
+    def add_move(r, c):
+        if 0 <= r < 8 and 0 <= c < 8:
+            target = board[r][c]
+            if target is None:
+                moves.append((r, c))
+                return True  # continue moving
+            elif piece_color(target) != color:
+                moves.append((r, c))
+                return False  # stop after capture
+            else:
+                return False  # blocked by own piece
+        return False
+
+    if piece.endswith("pawn"):
+        direction = -1 if color == "white" else 1
+        start_row = 6 if color == "white" else 1
+
+        # Forward
+        if board[from_row + direction][from_col] is None:
+            moves.append((from_row + direction, from_col))
+            # Double move
+            if from_row == start_row and board[from_row + 2 * direction][from_col] is None:
+                moves.append((from_row + 2 * direction, from_col))
+
+        # Captures
+        for dc in [-1, 1]:
+            r, c = from_row + direction, from_col + dc
+            if 0 <= r < 8 and 0 <= c < 8:
+                target = board[r][c]
+                if target and piece_color(target) != color:
+                    moves.append((r, c))
+
+    elif piece.endswith("rook"):
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    elif piece.endswith("bishop"):
+        directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+    elif piece.endswith("queen"):
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1),
+                      (-1, -1), (-1, 1), (1, -1), (1, 1)]
+    elif piece.endswith("king"):
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1),
+                      (-1, -1), (-1, 1), (1, -1), (1, 1)]
+        for dr, dc in directions:
+            r, c = from_row + dr, from_col + dc
+            add_move(r, c)
+        return moves
+    elif piece.endswith("knight"):
+        steps = [(2, 1), (1, 2), (-1, 2), (-2, 1),
+                 (-2, -1), (-1, -2), (1, -2), (2, -1)]
+        for dr, dc in steps:
+            r, c = from_row + dr, from_col + dc
+            add_move(r, c)
+        return moves
+
+    # For rook, bishop, queen
+    for dr, dc in directions:
+        r, c = from_row + dr, from_col + dc
+        while add_move(r, c):
+            r += dr
+            c += dc
+
+    return moves
 
 
 def draw_labels():
